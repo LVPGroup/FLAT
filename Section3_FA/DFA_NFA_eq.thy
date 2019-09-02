@@ -1,0 +1,34 @@
+text\<open>
+Formal Languages and Automata Theory (FLAT)
+according to the book with same name (2nd version) by Zongli Jiang
+created by Yongwang Zhao (zhaoyw@buaa.edu.cn)
+School of Computer Science and Engineering, Beihang University, Beijing, China
+\<close>
+
+section\<open>3. Finite Automaton\<close>
+
+subsection\<open>3.3: nondeterministic finite automaton\<close>
+
+theory DFA_NFA_eq
+  imports DFA NFAe
+begin
+
+subsubsection\<open>equivalence of DFA and NFA\<close>
+definition
+ nfa2dfa :: "('a,'s)nfa \<Rightarrow> ('a,'s set)dfa" where
+"nfa2dfa A \<equiv> ({q0 A}, \<lambda>a Q. \<Union>((\<delta> A) a ` Q), {Q. \<exists>q\<in>Q. q \<in> F A})"
+
+(*** Equivalence of NA and DA ***)
+
+lemma DFA_delta_is_lift_NFA_delta:
+ "DFA.\<delta>' (nfa2dfa A) w Q = \<Union>(NFA.\<delta>' A w ` Q)"
+  by (induct w arbitrary:Q)(auto simp:nfa2dfa_def)
+
+lemma NFA_DFA_equiv:
+  "NFA.accepts A w = DFA.accepts (nfa2dfa A) w"
+  apply (simp add: DFA.accepts_def NFA.accepts_def DFA_delta_is_lift_NFA_delta)
+  apply (simp add: nfa2dfa_def)
+  done
+
+
+end

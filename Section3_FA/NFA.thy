@@ -1,0 +1,77 @@
+text\<open>
+Formal Languages and Automata Theory (FLAT)
+according to the book with same name (2nd version) by Zongli Jiang
+created by Yongwang Zhao (zhaoyw@buaa.edu.cn)
+School of Computer Science and Engineering, Beihang University, Beijing, China
+\<close>
+
+section\<open>3. Finite Automaton\<close>
+
+subsection\<open>3.3: nondeterministic finite automaton\<close>
+
+theory NFA
+imports AutoProj
+begin
+
+subsubsection\<open>definition 3-7: nondeterministic finite automaton\<close>
+
+text\<open>
+M = <Q,\<Sigma>,\<delta>,q0,F>
+Q: states, represented as 's
+\<Sigma>: input alphabet, represented as 'a
+\<delta>: transition function
+q0: initial state
+F: final states
+nfa defined as below is a triple <q0,\<delta>,F>
+\<close>
+type_synonym ('a,'s) nfa = "'s * ('a \<Rightarrow> 's \<Rightarrow> 's set) * ('s set)"
+
+abbreviation "q0 \<equiv> start"
+abbreviation "\<delta> \<equiv> next"
+abbreviation "F \<equiv> fin"
+
+primrec \<delta>' :: "('a,'s)nfa \<Rightarrow> 'a list \<Rightarrow> 's \<Rightarrow> 's set" where
+"\<delta>' A []    p = {p}" |
+"\<delta>' A (a#w) p = \<Union>(\<delta>' A w ` \<delta> A a p)"
+
+subsubsection\<open>definition 3-8: accepted language\<close>
+definition
+ accepts :: "('a,'s)nfa \<Rightarrow> 'a list \<Rightarrow> bool" where
+"accepts A w = (\<exists>q \<in> \<delta>' A w (q0 A). q \<in> F A)"
+
+type_synonym 'a lang = "'a list set"
+
+definition NFALang :: "('a,'s)nfa \<Rightarrow> 'a lang"
+  where "NFALang m \<equiv> {x. accepts m x}"
+
+
+definition
+ step :: "('a,'s)nfa \<Rightarrow> 'a \<Rightarrow> ('s * 's)set" where
+"step A a = {(p,q) . q \<in> \<delta> A a p}"
+
+primrec steps :: "('a,'s)nfa \<Rightarrow> 'a list \<Rightarrow> ('s * 's)set" where
+"steps A [] = Id" |
+"steps A (a#w) = step A a O steps A w"
+
+lemma steps_append[simp]:
+ "steps A (v@w) = steps A v  O  steps A w"
+by(induct v, simp_all add:O_assoc)
+
+lemma in_steps_append[iff]:
+  "(p,r) : steps A (v@w) = ((p,r) : (steps A v O steps A w))"
+apply(rule steps_append[THEN equalityE])
+apply blast
+done
+
+lemma delta_conv_steps: "\<And>p. \<delta>' A w p = {q. (p,q) \<in> steps A w}"
+by(induct w)(auto simp:step_def)
+
+lemma accepts_conv_steps:
+ "accepts A w = (\<exists>q. (q0 A,q) \<in> steps A w \<and> q \<in> F A)"
+by(simp add: delta_conv_steps accepts_def)
+
+abbreviation
+  Cons_syn :: "'a \<Rightarrow> 'a list set \<Rightarrow> 'a list set" (infixr "##" 65) where
+  "x ## S \<equiv> Cons x ` S"
+
+end

@@ -1,0 +1,429 @@
+text\<open>
+Formal Languages and Automata Theory (FLAT)
+according to the book with same name (2nd version) by Zongli Jiang
+created by Yongwang Zhao (zhaoyw@buaa.edu.cn)
+School of Computer Science and Engineering, Beihang University, Beijing, China
+\<close>
+
+section\<open>2.Grammar\<close>
+
+theory Grammar
+  imports Main
+begin
+
+subsection\<open>2.2 formal definition\<close>
+
+subsubsection\<open>definition 2-1: Grammar\<close>
+
+abbreviation "l_prod p \<equiv> fst p"
+abbreviation "r_prod p \<equiv> snd p"
+
+type_synonym 'a product = "'a list \<times> 'a list"
+
+(* Grammar = <V,T,P,S> *)
+type_synonym 'a Grammar = "'a set \<times> 'a set \<times> 'a product set \<times> 'a"
+
+abbreviation "V g \<equiv> fst g"
+abbreviation "T g \<equiv> fst (snd g)"
+abbreviation "P g \<equiv> fst (snd (snd g))"
+abbreviation "S g \<equiv> snd (snd (snd g))"
+
+lemma getV[simp]: "V (v,t,p,s) = v" by simp
+lemma getT[simp]: "T (v,t,p,s) = t" by simp
+lemma getP[simp]: "P (v,t,p,s) = p" by simp
+lemma getS[simp]: "S (v,t,p,s) = s" by simp
+
+definition grammar :: "'a Grammar \<Rightarrow> bool"
+  where "grammar g \<equiv> V g \<noteq> {} \<and> T g \<noteq> {} \<and> V g \<inter> T g = {} \<and> P g \<noteq> {} 
+            \<and> (\<forall>p\<in>P g. l_prod p \<noteq> [] \<and> (\<exists>i<length (l_prod p). (l_prod p)!i \<in> V g)) 
+            \<and> S g \<in> V g"
+
+subsubsection\<open>example 2-1\<close>
+
+datatype Symbol = A | B | C | D | S0 | a | b | c | zero ("\<zero>") | one ("\<one>") | two ("\<two>") | sharp ("#")
+
+locale example_2_1
+begin
+
+definition "g1 \<equiv> ({A,B,C,S0},{a,b,c},{([A,B], [a,a,A])},S0)"
+
+lemma "grammar g1" 
+  apply(simp add:grammar_def g1_def) by auto
+
+definition "g2 = ({A,B},{\<zero>,\<one>},{([A], [\<zero>]),([A],[\<one>]),([A],[\<zero>,A]),([A],[\<one>,A])},A)"
+lemma "grammar g2" 
+  by(simp add:grammar_def g2_def)
+
+
+end
+
+thm example_2_1.g2_def
+
+subsubsection \<open>definition 2-2: derivation and reduction\<close>
+
+inductive_set derive_set :: "'a Grammar \<Rightarrow> ('a list \<times> 'a list) set"
+  and derive :: "'a Grammar \<Rightarrow> 'a list \<Rightarrow> 'a list \<Rightarrow> bool" ("_ \<turnstile> _ \<longrightarrow> _" [80,80,80] 81)
+  for G :: "'a Grammar"
+  where
+    "derive G x y \<equiv> (x,y) \<in> derive_set G"
+  | r_drvset: "\<exists>p\<in>P G. \<alpha> = l_prod p \<and> \<beta> = r_prod p \<Longrightarrow> (\<gamma>@\<alpha>@\<delta>,\<gamma>@\<beta>@\<delta>)\<in>derive_set G"
+
+inductive nderives :: "'a Grammar \<Rightarrow> 'a list \<Rightarrow> nat \<Rightarrow> 'a list \<Rightarrow> bool" 
+("_ \<turnstile> _ \<midarrow>_\<rightarrow> _" [80,80,80,80] 81)
+  where drv0: "g \<turnstile> x \<midarrow>0\<rightarrow> x" |
+        drvn: "\<exists>r. g \<turnstile> x \<midarrow>n\<rightarrow> r \<and> g \<turnstile> r \<longrightarrow> y \<Longrightarrow> g \<turnstile> x \<midarrow>(n+1)\<rightarrow> y"
+
+definition derives :: "'a Grammar \<Rightarrow> 'a list \<Rightarrow> 'a list \<Rightarrow> bool" ("_ \<turnstile> _ \<midarrow>*\<rightarrow> _" [80,80,80] 81)
+  where "derives g x y \<equiv> (\<exists>n. g \<turnstile> x \<midarrow>n\<rightarrow> y)"
+
+definition derives1 :: "'a Grammar \<Rightarrow> 'a list \<Rightarrow> 'a list \<Rightarrow> bool" ("_ \<turnstile> _ \<midarrow>+\<rightarrow> _" [80,80,80] 81)
+  where "derives1 g x y \<equiv> (\<exists>n>0. g \<turnstile> x \<midarrow>n\<rightarrow> y)"
+
+inductive_set reduce_set :: "'a Grammar \<Rightarrow> ('a list \<times> 'a list) set"
+and reduce :: "'a Grammar \<Rightarrow> 'a list \<Rightarrow> 'a list \<Rightarrow> bool"
+and reduces :: "'a Grammar \<Rightarrow> 'a list \<Rightarrow> 'a list \<Rightarrow> bool"
+and reduces1 :: "'a Grammar \<Rightarrow> 'a list \<Rightarrow> 'a list \<Rightarrow> bool"
+for G :: "'a Grammar"
+where
+    "reduce G x y \<equiv> (x,y) \<in> reduce_set G"
+  | "reduces G x y \<equiv> (x,y) \<in> (reduce_set G)\<^sup>*"
+  | "reduces1 G x y \<equiv> (x,y) \<in> (reduce_set G)\<^sup>+"
+  | r_redset: "\<exists>p\<in>P G. \<alpha> = l_prod p \<and> \<beta> = r_prod p \<Longrightarrow> (\<gamma>@\<beta>@\<delta>,\<gamma>@\<alpha>@\<delta>)\<in>reduce_set G"
+
+lemma "derive G x y = reduce G y x" 
+  apply(rule iffI) 
+    apply(rule derive_set.cases) apply simp
+  apply (simp add: reduce_set.r_redset)
+
+  apply(rule reduce_set.cases)
+  apply fast
+  by (simp add: derive_set.r_drvset)
+
+lemma "derives G x y = reduces G y x"
+  apply(simp add:derives_def) 
+  sorry
+
+subsubsection\<open>example 2-4\<close>
+
+locale example_2_4
+begin
+
+definition "g1 \<equiv> ({A},{a},{([A], [a]),([A],[a,A])},A)"
+
+lemma "grammar g1" 
+  by(simp add:grammar_def g1_def)
+
+
+lemma "derive g1 [A] [a]"
+  using r_drvset[where G = g1 and \<alpha>="[A]" and \<gamma> = "[]" and \<delta>="[]" and \<beta>="[a]"]
+  by(simp add: g1_def)
+
+lemma "derive g1 [A,A,a,a,A,A,A] [a,A,a,a,A,A,A]"
+  using r_drvset[where \<alpha>="[A]" and \<gamma> = "[]" and \<delta>="[A, a, a, A, A, A]" and \<beta>="[a]"]
+  by(simp add: g1_def)
+
+end
+
+subsubsection\<open>definition 2-4: sentantial form\<close>
+
+definition allterminals :: "'a Grammar \<Rightarrow> 'a list \<Rightarrow> bool"
+  where "allterminals g w \<equiv> (\<forall>i<length w. (w!i)\<in>T g)"
+
+(* after interpretation, we propage the function ``derives'' to the theory. 
+here we use local.derives to refer to the definition inner the locale. *)
+
+definition sentence_form :: "'a Grammar \<Rightarrow> 'a list \<Rightarrow> bool"
+  where "sentence_form g w \<equiv> (g \<turnstile> [(S g)] \<midarrow>*\<rightarrow> w)"
+
+subsubsection\<open>definition 2-3: Languages\<close>
+
+type_synonym 'a lang = "'a list set"
+
+definition Lang :: "'a Grammar \<Rightarrow> 'a lang"
+  where "Lang g \<equiv> {w. sentence_form g w \<and> allterminals g w}"
+
+definition sentence :: "'a Grammar \<Rightarrow> 'a list \<Rightarrow> bool"
+  where "sentence g w \<equiv> (w\<in>Lang g)"
+
+subsection\<open>2.3 construct syntax\<close>
+
+subsubsection\<open>definition 2-5: Grammar Equivalence\<close>
+
+definition GrammarEquiv :: "'a Grammar \<Rightarrow> 'a Grammar \<Rightarrow> bool" (infix "\<cong>" 80)
+  where "GrammarEquiv g1 g2 \<equiv> Lang g1 = Lang g2"
+
+subsection\<open>2.4 Chomsky Framework for Languages\<close>
+
+subsubsection\<open>definition 2-6: Chomsky Languages\<close>
+definition grammar_type0 :: "'a Grammar \<Rightarrow> bool"
+  where "grammar_type0 g \<equiv> grammar g"
+
+abbreviation "phrasestruct_grammar \<equiv> grammar_type0"
+
+text\<open>
+define all 0 type languages
+\<close>
+definition "PSL \<equiv> {l. \<exists>g. grammar_type0 g \<and> Lang g = l}"
+
+text\<open>type 1 grammar: \<forall> \<alpha> \<rightarrow> \<beta> \<in> P, |\<alpha>| \<le> |\<beta>|\<close>
+definition grammar_type1 :: "'a Grammar \<Rightarrow> bool"
+  where "grammar_type1 g \<equiv> grammar_type0 g \<and> (\<forall>p\<in>P g. length (l_prod p) \<le> length (r_prod p))"
+
+abbreviation "contextsensitive_grammar \<equiv> grammar_type1"
+
+text\<open>
+define CSL languages
+\<close>
+definition "CSL \<equiv> {l. \<exists>g. contextsensitive_grammar g \<and> Lang g = l}"
+
+text\<open>type 2 grammar: \<forall> \<alpha> \<rightarrow> \<beta> \<in> P, |\<alpha>| \<le> |\<beta>| and \<alpha> \<in> V\<close>
+definition grammar_type2 :: "'a Grammar \<Rightarrow> bool"
+  where "grammar_type2 g \<equiv> grammar_type1 g \<and> (\<forall>p\<in>P g. length (l_prod p) = 1 \<and> hd (l_prod p) \<in> V g)"
+
+abbreviation "contextfree_grammar \<equiv> grammar_type2"
+
+text\<open>
+define CFL languages
+\<close>
+definition "CFL \<equiv> {l. \<exists>g. contextfree_grammar g \<and> Lang g = l}"
+
+
+text\<open>type 3 grammar: \<forall> \<alpha> \<rightarrow> \<beta> \<in> P, having forms of A \<rightarrow> \<omega> or A \<rightarrow> \<omega>B, 
+where A,B \<in> V and \<omega> \<in> T^+\<close>
+definition grammar_type3 :: "'a Grammar \<Rightarrow> bool"
+  where "grammar_type3 g \<equiv> grammar_type2 g \<and> (\<forall>p\<in>P g. r_prod p \<noteq> [] 
+                \<and> (allterminals g (r_prod p) 
+                  \<or> (length (r_prod p) > 1 
+                      \<and> allterminals g (butlast (r_prod p))
+                      \<and> last (r_prod p) \<in> V g)))"
+
+abbreviation "regular_grammar \<equiv> grammar_type3"
+
+text\<open>
+define RL languages
+\<close>
+definition "RL \<equiv> {l. \<exists>g. regular_grammar g \<and> Lang g = l}"
+
+text\<open>
+regular grammars are context free grammars.
+\<close>
+lemma RG_CFG: "regular_grammar g \<Longrightarrow> contextfree_grammar g"
+  by(simp add:grammar_type3_def grammar_type2_def) 
+
+text\<open>
+context free grammars are context sensitive grammars.
+\<close>
+lemma CFG_CSG: "contextfree_grammar g \<Longrightarrow> contextsensitive_grammar g"
+  by(simp add:grammar_type2_def)
+
+text\<open>
+context sensitive grammars are phrase structure grammars.
+\<close>
+lemma CSG_PSG: "contextsensitive_grammar g \<Longrightarrow> phrasestruct_grammar g"
+  by(simp add:grammar_type1_def)
+
+text\<open>
+regular languages are context free languages.
+\<close>
+lemma RL_CFL: "RL \<subseteq> CFL" 
+  apply(simp add: RL_def CFL_def) using RG_CFG by blast
+
+text\<open>
+context free languages are context sensitive languages.
+\<close>
+lemma CFL_CSL: "CFL \<subseteq> CSL" 
+  apply(simp add: CSL_def CFL_def) using CFG_CSG by blast
+
+text\<open>
+context sensitive languages are phrase structure languages.
+\<close>
+lemma CSL_PSL: "CSL \<subseteq> PSL" 
+  apply(simp add: CSL_def PSL_def) using CSG_PSG by blast
+
+subsubsection\<open>theorem 2-1\<close>
+text\<open>
+\<forall> \<alpha> \<rightarrow> \<beta> \<in> P, having forms of A \<rightarrow> a or A \<rightarrow> aB, 
+\<close>
+definition singleprods_r :: "'a Grammar \<Rightarrow> bool"
+  where "singleprods_r g \<equiv> \<forall>p\<in>P g. length (l_prod p) = 1 \<and> hd (l_prod p) \<in> V g 
+                \<and> (length (r_prod p) = 1 \<and> hd (r_prod p) \<in> T g
+                  \<or> length (r_prod p) = 2 \<and> hd (r_prod p) \<in> T g \<and> last (r_prod p) \<in> V g)"
+
+text\<open>
+exercise for students
+\<close>
+theorem "L \<in> RL \<longleftrightarrow> (\<exists>G. grammar G \<and> singleprods_r G \<and> L = Lang G)"
+  sorry
+
+subsubsection\<open>definition 2-7: linear grammar\<close>
+
+text\<open>
+\<forall> \<alpha> \<rightarrow> \<beta> \<in> P, having forms of A \<rightarrow> \<omega> or A \<rightarrow> \<omega>Bx, 
+where A,B \<in> V and \<omega>,x \<in> T^*
+\<close>
+definition linear_grammar :: "'a Grammar \<Rightarrow> bool"
+  where "linear_grammar g \<equiv> grammar g \<and> (\<forall>p\<in>P g. length (l_prod p) = 1 \<and> hd (l_prod p) \<in> V g
+                              \<and> (allterminals g (r_prod p) 
+                                 \<or> (\<exists>!i. i<length (r_prod p) \<and> (r_prod p)!i \<in> V g) ))"
+
+lemma "\<exists>!i. i<length l \<Longrightarrow> l \<noteq> []" by fastforce
+
+subsubsection\<open>definition 2-8: right linear grammar
+A \<rightarrow> \<omega> or A \<rightarrow> \<omega>B, where \<omega> \<in> T^+
+\<close>
+
+definition r_linear_grammar :: "'a Grammar \<Rightarrow> bool"
+  where "r_linear_grammar g \<equiv> grammar_type2 g \<and> (\<forall>p\<in>P g. r_prod p \<noteq> [] 
+                \<and> (allterminals g (r_prod p) 
+                  \<or> (length (r_prod p) > 1 
+                      \<and> allterminals g (butlast (r_prod p))
+                      \<and> last (r_prod p) \<in> V g)))"
+
+lemma "r_linear_grammar = grammar_type3"
+  using r_linear_grammar_def grammar_type3_def by fast
+
+definition r_linear_lang :: "'a lang \<Rightarrow> bool"
+  where "r_linear_lang l \<equiv> (\<exists>g. r_linear_grammar g \<and> Lang g = l)"
+
+subsubsection\<open>definition 2-8: left linear grammar
+A \<rightarrow> \<omega> or A \<rightarrow> B\<omega>, where \<omega> \<in> T^+
+\<close>
+
+definition l_linear_grammar :: "'a Grammar \<Rightarrow> bool"
+  where "l_linear_grammar g \<equiv> grammar_type2 g \<and> (\<forall>p\<in>P g. r_prod p \<noteq> [] 
+                \<and> (allterminals g (r_prod p) 
+                  \<or> (length (r_prod p) > 1 
+                      \<and> allterminals g (tl (r_prod p))
+                      \<and> hd (r_prod p) \<in> V g)))"
+
+definition l_linear_lang :: "'a lang \<Rightarrow> bool"
+  where "l_linear_lang l \<equiv> (\<exists>g. l_linear_grammar g \<and> Lang g = l)"
+
+subsubsection\<open>theorem 2-2\<close>
+text\<open>
+\<forall> \<alpha> \<rightarrow> \<beta> \<in> P, having forms of A \<rightarrow> a or A \<rightarrow> Ba, 
+\<close>
+definition singleprods_l :: "'a Grammar \<Rightarrow> bool"
+  where "singleprods_l g \<equiv> \<forall>p\<in>P g. length (l_prod p) = 1 \<and> hd (l_prod p) \<in> V g 
+                \<and> (length (r_prod p) = 1 \<and> hd (r_prod p) \<in> T g
+                  \<or> length (r_prod p) = 2 \<and> hd (r_prod p) \<in> V g \<and> last (r_prod p) \<in> T g)"
+
+text\<open>
+exercise for students
+\<close>
+theorem "l_linear_lang L \<longleftrightarrow> (\<exists>G. grammar G \<and> singleprods_l G \<and> L = Lang G)"
+  sorry
+
+
+subsubsection \<open>relations among right/left linear grammar\<close>
+
+lemma "r_linear_grammar g \<Longrightarrow> linear_grammar g"
+  apply(simp add: r_linear_grammar_def linear_grammar_def)
+  apply(rule conjI)
+  using grammar_type0_def grammar_type1_def grammar_type2_def apply blast
+  apply(simp add:grammar_type2_def Ball_def) apply(rule allI)+ apply(rule impI)
+  apply(rule conjI) apply auto[1] 
+  apply(rule conjI) apply auto[1] 
+  subgoal for a b
+    apply(cases "allterminals g b") apply fast
+    apply auto 
+    apply (metis One_nat_def Suc_pred last_conv_nth length_greater_0_conv less_Suc_eq)
+    apply(subgoal_tac "allterminals g (butlast b) \<and> last b \<in> V g") prefer 2
+     apply blast apply(subgoal_tac "i = length b - 1") apply(subgoal_tac "y = length b - 1") 
+    apply blast sorry
+  done
+  
+lemma "l_linear_grammar g \<Longrightarrow> linear_grammar g"
+  apply(simp add: l_linear_grammar_def linear_grammar_def)
+  apply(rule conjI)
+   apply (simp add: grammar_type0_def grammar_type1_def grammar_type2_def) 
+  apply(simp add:grammar_type2_def Ball_def)
+  sorry
+
+subsection\<open>2.5 empty sentence\<close>
+
+subsubsection\<open>definition 2-9: empty-production\<close>
+
+notation Nil ("\<epsilon>")
+
+text\<open>check if a production rule is an empty rule\<close>
+definition emptyproduct :: "'a product \<Rightarrow> bool"
+  where "emptyproduct p \<equiv> r_prod p = \<epsilon>"
+
+
+lemma csg_not_derive2emp: 
+"contextsensitive_grammar g \<Longrightarrow> g \<turnstile> \<alpha> \<longrightarrow> \<beta> \<Longrightarrow> \<beta> \<noteq> \<epsilon>"
+  apply(simp add: grammar_type1_def grammar_type0_def grammar_def)
+  apply(rule derive_set.cases) apply fast 
+  subgoal for \<alpha>' \<beta>' \<gamma> \<delta> 
+    apply(subgoal_tac "\<beta>' \<noteq> \<epsilon>") apply blast
+    by fastforce
+  done
+
+lemma csg_not_nderives2emp: 
+assumes p0: "contextsensitive_grammar g"
+and p1: "\<alpha> \<noteq> \<epsilon>"
+and drvs: "g \<turnstile> \<alpha> \<midarrow>+\<rightarrow> \<beta>"
+shows "\<beta> \<noteq> \<epsilon>"
+proof -
+  from drvs obtain n where drv_n: "g \<turnstile> \<alpha> \<midarrow>n\<rightarrow> \<beta>" using derives1_def by blast
+  then show ?thesis
+  proof(induct n arbitrary: \<beta>)
+    case 0
+    then show ?case using drv_n p1
+      by (metis csg_not_derive2emp nderives.cases p0)
+  next
+    case (Suc n)
+    assume a0:"\<And>\<beta>. g \<turnstile> \<alpha> \<midarrow>n\<rightarrow> \<beta> \<Longrightarrow> \<beta> \<noteq> \<epsilon>"
+    assume a1:"g \<turnstile> \<alpha> \<midarrow>Suc n\<rightarrow> \<beta>"
+    from a1 obtain r where r: "g \<turnstile> \<alpha> \<midarrow>n\<rightarrow> r \<and> g \<turnstile> r \<longrightarrow> \<beta>" 
+      apply(rule nderives.cases) apply fast by fastforce
+    hence "r \<noteq> \<epsilon>" using a0 by simp
+    then show ?case using r csg_not_derive2emp p0 by blast
+  qed
+qed
+
+lemma csg_not_derives2emp: 
+assumes p0: "contextsensitive_grammar g"
+and p1: "\<alpha> \<noteq> \<epsilon>"
+and drvs: "g \<turnstile> \<alpha> \<midarrow>*\<rightarrow> \<beta>"
+shows "\<beta> \<noteq> \<epsilon>"
+proof -
+  from drvs obtain n where drv_n: "g \<turnstile> \<alpha> \<midarrow>n\<rightarrow> \<beta>" using derives_def by blast
+
+  then show ?thesis
+  proof(cases n)
+    case 0
+    then show ?thesis using drv_n p1
+      by (metis csg_not_derive2emp nderives.cases p0)
+  next
+    case (Suc m)
+    then show ?thesis using csg_not_nderives2emp[OF p0 p1] drv_n derives1_def by blast 
+    qed
+qed
+
+text\<open>
+context sensitive languages dont not contain the empty sentence
+\<close>
+lemma csg_notempty: "contextsensitive_grammar g \<Longrightarrow> \<epsilon> \<notin> Lang g"
+  apply(simp add: grammar_type1_def grammar_type0_def grammar_def 
+              Lang_def sentence_form_def allterminals_def)
+  by (metis csg_not_derives2emp grammar_def grammar_type0_def grammar_type1_def not_Cons_self2) 
+
+lemma csl_notempty: "\<forall>l\<in>CSL. \<epsilon> \<notin> l" 
+  apply(simp add:CSL_def)  using csg_notempty by blast
+
+text\<open>
+context free languages dont not contain the empty sentence
+\<close>
+lemma "\<forall>l\<in>CFL. \<epsilon> \<notin> l" 
+  using csl_notempty CFL_CSL by blast
+
+text\<open>
+regular languages dont not contain the empty sentence
+\<close>
+lemma "\<forall>l\<in>RL. \<epsilon> \<notin> l" 
+  using csl_notempty CFL_CSL RL_CFL by blast
+
+
+end

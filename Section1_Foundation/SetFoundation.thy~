@@ -1,0 +1,890 @@
+(*
+Isabelle/HOL source for lectures of Set Theory
+created by Yongwang ZHAO
+School of Computer Science and Engineering, Beihang University, China
+zhaoyw@buaa.edu.cn
+*)
+
+theory SetFoundation
+imports Main 
+
+begin
+
+(*
+typedecl Student
+
+consts InRoom :: "Student \<Rightarrow> bool"
+
+definition students_in_room :: "Student set"
+  where "students_in_room \<equiv> {x. InRoom(x)}"
+
+
+typedef nat1 = "{x::nat. x > 0}"
+  proof -
+    have "(2::nat) \<in> {x::nat. x>0}" by force
+    then show ?thesis by blast
+  qed
+*)
+
+chapter {* chapter 5. Set and Operation *}
+
+section {* section 5.1: sets and elements *}
+
+subsection {* example 5.1 *}
+
+
+definition "A0 \<equiv> {''a'',''e'',''i'',''w'',''u''}"
+
+lemma "''a'' \<in> A0" 
+  by (simp add: A0_def)
+
+lemma "''e'' \<in> A0" 
+  by (simp add: A0_def)
+
+lemma "''i'' \<in> A0" 
+  by (simp add: A0_def)
+
+lemma "''b'' \<notin> A0" 
+  by (simp add: A0_def)
+
+lemma "''c'' \<notin> A0"
+  by (simp add: A0_def)
+
+subsection {*example 5.2*}
+
+definition "B0 \<equiv> {x::int. x > 0}"
+
+subsection {* predicates and sets *}
+
+lemma "a\<in>{x. P(x)} \<longleftrightarrow> P a" by auto
+
+lemma "b\<notin>{x. P(x)} \<longleftrightarrow> \<not> (P b)" by auto
+
+subsection {*example 5.3*}
+
+definition "S\<^sub>1 \<equiv> {x::int. x > 0 \<and> x mod 2 = 1}"
+
+definition "S\<^sub>3 \<equiv> {x::int. x^3 + x^2 + 2 = 0}"
+
+definition "Prime_Number \<equiv> {x. prime x}"
+
+definition "S\<^sub>4 \<equiv> {x::nat. x\<in>Prime_Number \<and> x \<le> 10}"
+
+lemma "S\<^sub>4 = {2,3,5,7}" 
+  apply(simp add: S\<^sub>4_def Prime_Number_def prime_def dvd_def prime_elem_def)
+ sorry
+
+definition "S\<^sub>5 \<equiv> {x::int. x =  8 \<or> x = -2 \<or> x = 75}"
+
+lemma "S\<^sub>5 = {8, -2 ,75}" 
+  proof(rule subset_antisym)
+    show "S\<^sub>5 \<subseteq> {8, -2, 75}" using S\<^sub>5_def by auto 
+    show "{8, -2, 75} \<subseteq> S\<^sub>5" using S\<^sub>5_def by auto 
+  qed
+
+subsection {* definition 5.1 *}
+
+consts P :: "'t \<Rightarrow> bool"
+
+definition "A1 \<equiv> {x. P(x)}"
+
+lemma "\<forall>x. (P(x) \<longleftrightarrow> x\<in>A1)" 
+  by (simp add: A1_def) 
+
+definition A2 :: "('t \<Rightarrow> bool) \<Rightarrow> 't set" 
+  where aa2: "A2(Q) = {x. Q(x)}"
+
+lemma "\<forall>x. (Q(x) \<longleftrightarrow> x\<in>A2(Q))" 
+  by (simp add: aa2) 
+
+section {* section 5.2: equivalence and containment *}
+
+subsection {* example 5.4 *}
+
+lemma "{1,2,3,4} = {(x::int). x > 0 \<and> x \<le> 4}" 
+  by auto
+
+lemma "{1,2,3,4} = {(x::int). 0 < x \<and> x < 6 \<and> (\<exists>y. x * y = 12)}" 
+apply auto apply(subgoal_tac "x = 1 \<or> x = 2 \<or> x = 3 \<or> x = 4 \<or> x = 5") 
+  prefer 2 apply simp apply auto
+  by presburger 
+
+subsection {* definition 5.2 *}
+
+ (*definition of set equal*)
+lemma "(A = B) = (\<forall>x. (x \<in> A) \<longleftrightarrow> (x \<in> B))" 
+  using Set.set_eq_iff by fastforce
+
+subsection {* example 5.5 *}
+
+lemma "{1,2,3} = {3,1,2}" 
+  by auto
+
+lemma "{''a'',''b'',''a''} = {''a'',''a'',''b'',''b'',''a''}" 
+  by auto
+
+lemma "{''a'',''b'',''a''} = {''a'',''b''}" 
+  by auto
+
+subsection {* example 5.6 *}
+
+consts d :: "int set"
+consts p :: "int set"
+consts q :: "int"
+
+definition "B1 \<equiv> {d, {1,2},p,{q}}"
+
+lemma "{q} \<in> B1" 
+  by (simp add: B1_def)
+
+(*lemma "q \<notin> B1" *)
+
+subsection {* definition 5.3 *}
+
+(*definition of \<subseteq>*)
+lemma "(A \<subseteq> B) = (\<forall>t. t \<in> A \<longrightarrow> t \<in> B)"
+  using subset_iff by auto
+
+subsection {* definition 5.4 *}
+
+(*definition of \<subseteq>*)
+lemma "(A \<subseteq> B) = (\<forall>x\<in>A. x \<in> B)"
+  using subset_eq by auto
+
+(*definition of \<subset>*)
+lemma "A \<subset> B = ((\<forall>x. x\<in>A \<longrightarrow> x\<in>B) \<and> (\<exists>x. x\<in>B \<and> x\<notin>A))" 
+  by auto
+
+subsection {* example 5.8 *}
+
+definition "A3 \<equiv> {1,3,4,5,7}"
+
+definition "B2 \<equiv> {1,3,4}"
+
+definition "C1 \<equiv> {4}"
+
+lemma "C1 \<subseteq> B2" 
+  by (simp add:B2_def C1_def)
+
+lemma "B2 \<subseteq> A3"
+  by (simp add:B2_def A3_def)
+
+subsection {* theorem 5.1 *}
+
+lemma "(A = B) = (A \<subseteq> B \<and> B \<subseteq> A)"
+  using set_eq_iff by auto
+
+lemma "A \<subseteq> A" by simp
+
+subsection {* theorem 5.2 *}
+lemma "A \<subseteq> B \<and> B \<subseteq> C \<Longrightarrow> A \<subseteq> C"
+  by auto
+
+subsection {* definition 5.5 *}
+
+lemma "UNIV = {x. True}"
+ using UNIV_def by auto  (* {x. P(x) \<or> \<not>P(x)}, is esentially equal to {x. True} *)
+
+lemma "\<forall>x. x\<in>UNIV" by auto
+
+subsection {* definition 5.6 *}
+
+lemma "{} = {x. False}"
+  using empty_def by auto
+
+lemma "\<forall>x. x\<notin>{}" by auto
+
+subsection {* theorem 5.3 *}
+
+lemma "\<forall>P. {} \<subseteq> P" 
+  by simp
+
+section {* section 5.3: power set*}
+
+subsection {* definition 5.7 *}
+
+thm Pow_def (* definition of power set*)
+
+lemma "Pow A = {X. (\<forall>t\<in>X. t\<in>A)}" 
+  using Pow_def[of A] by blast 
+
+lemma "Pow {} = {{}}" 
+  by simp
+
+lemma "Pow {a} = {{},{a}}"
+  by auto
+
+lemma "Pow {a,b} = {{},{a},{b},{a,b}}"
+  by auto
+
+lemma "B \<subseteq> A \<Longrightarrow> B \<in> Pow A"
+  by simp
+
+lemma "a\<in>A \<Longrightarrow> {a}\<subseteq>A \<and> {a}\<in>Pow A"
+  by simp
+
+lemma "a\<in>A \<and> b\<in>A \<Longrightarrow> {a,b}\<subseteq>A \<and> {a,b}\<in>Pow A"
+  by simp
+
+subsection {* differences between subset and belong *}
+lemma "B \<subseteq> A \<Longrightarrow> B \<in> Pow A"
+  by auto
+
+lemma "a\<in>A \<Longrightarrow> {a} \<subseteq> A \<and> {a}\<in>Pow A"
+  by auto
+
+lemma "a\<in>A \<and> b\<in>A \<Longrightarrow> {a,b}\<subseteq>A \<and> {a,b}\<in>Pow A"
+  by auto
+
+
+subsection {* definition 5.8 *}
+
+thm card_def (* definition of card of set *)
+
+lemma "finite A \<Longrightarrow> finite (Pow A)"
+  by simp
+
+lemma "\<not> (finite A) \<Longrightarrow> \<not> (finite (Pow A))"
+  by simp
+
+subsection {* theorem 5.5 *}
+
+lemma "finite A \<Longrightarrow> card (Pow A) = 2 ^ card A"
+  using Power.card_Pow by auto
+
+lemma "infinite A \<Longrightarrow> card A = 0"
+  using Finite_Set.card.infinite by auto
+
+subsection {* example 5.9 *}
+
+value "Pow {''a'',''b'',''c''}"
+  
+section {* section 5.4: set operations *}
+
+subsection {* definition 5.9 *}
+
+(* definition of intersection*)
+lemma "A \<inter> B = {x. x\<in>A \<and> x\<in>B}"
+  using Int_def by auto
+
+(* definition of union*)
+lemma  "A \<union> B = {x. x \<in> A \<or> x \<in> B}" 
+  using Un_def by auto
+
+(* definition of difference*)
+lemma "A - B = {x. x \<in> A \<and> x \<notin> B}"
+  using "set_diff_eq" by auto
+
+subsection {* example 5.10 *}
+
+definition "A4 \<equiv> {1::int,2,3,4}"
+
+definition "B4 \<equiv> {3,4,5,6}"
+
+value "A4 \<union> B4" 
+
+value "A4 \<inter> B4"
+
+value "A4 - B4"
+
+value "B4 - A4"
+
+subsection {* definition 5.12 *}
+
+(* definition of complement *)
+lemma "-A = (UNIV - A)"
+  using Compl_eq_Diff_UNIV by auto
+
+lemma "- A = {x. x\<notin>A}" by auto
+
+subsection {* example 5.11 *}
+
+datatype univ = a | b | c | d
+
+lemma univ_lm: "UNIV = {a, b, c, d}" 
+  proof (rule UNIV_eq_I)
+    fix x show "x \<in> {a, b, c, d}" by (cases x) simp_all
+  qed
+
+definition "A7 \<equiv> {a, b}"
+
+value "- A7"
+
+lemma "- A7 = {c, d}" 
+  using univ_lm A7_def Compl_eq_Diff_UNIV Diff_eq_empty_iff insertE 
+    insertI1 insert_Diff_if insert_commute singletonD subset_insertI 
+    univ.distinct(3) univ.distinct(5) univ.distinct(7) univ.distinct(9) by blast
+
+definition "A5 \<equiv> {x::nat. x > 0}"
+
+lemma "- A5 = {x::nat. x = 0}" 
+  proof -
+    have "\<forall>x::nat. x > 0 \<or> x = 0" by auto
+    have "\<forall>x::nat. x\<in>{x. x = 0} = (x \<notin> {x. x > 0})" by simp
+    have "- A5 = UNIV - A5" by auto
+    then have "- A5 = {x::nat \<in> UNIV. x \<notin> {x::nat. x > 0}}" using set_diff_eq A5_def by auto
+    then have "- A5 = {x::nat \<in> UNIV. x \<in> {x::nat. x = 0}}" by auto
+    then show ?thesis by auto
+  qed
+  
+subsection {* example 5.12 *}
+
+lemma "A - B = A \<inter> (-B)"
+  using Set.Diff_eq by auto
+
+subsection {* example 5.13 *}
+
+lemma "A - (A \<inter> B) = A - B" 
+  by auto
+
+subsection {* definition 5.13 *}
+
+definition plus :: "'t set \<Rightarrow> 't set \<Rightarrow> 't set" (infix "\<oplus>" 70)
+  where "plus A B \<equiv> (A - B) \<union> (B - A)" 
+
+definition "A6 \<equiv> {''a'',''b'',''c'',''d''}"
+
+definition "B6 \<equiv> {''a'',''c'',''e''}"
+
+value "A6 - B6"
+value "B6 - A6"
+value "A6 \<oplus> B6" 
+
+subsection {* theorem 5.6 *}
+
+thm Set.Un_absorb
+lemma "A \<union> A = A" 
+  proof -
+    have "(\<forall>x. (x \<in> (A \<union> A))) = (\<forall>x. x\<in>{x. x \<in> A \<or> x \<in> A})" using Un_def by simp
+    then have "(\<forall>x. (x \<in> (A \<union> A))) = (\<forall>x. x\<in>{x. x \<in> A})" by simp
+    then show ?thesis using Un_def by simp 
+  qed
+
+lemma "A \<inter> A = A"
+  by auto
+thm Set.Int_absorb
+
+lemma "A \<union> B = B \<union> A"
+  by auto
+thm Set.Un_ac(3)
+
+lemma "A \<inter> B = B \<inter> A"
+  by auto
+thm Set.Int_ac(3)
+
+lemma "A \<union> (B \<union> C) = (A \<union> B) \<union> C" 
+  by auto
+
+lemma "A \<inter> (B \<inter> C) = (A \<inter> B) \<inter> C" 
+  by auto
+
+lemma "A \<union> (B \<inter> C) = (A \<union> B) \<inter> (A \<union> C)"
+  using Set.Un_Int_distrib by auto
+
+lemma "A \<inter> (B \<union> C) = (A \<inter> B) \<union> (A \<inter> C)"
+  using Set.Int_Un_distrib by auto
+
+subsection {* theorem 5.7 *}
+
+lemma "A \<union> {} = A"
+  using Set.Un_empty_right by auto
+
+lemma "A \<inter> UNIV = A"
+  using Set.Int_UNIV_right by auto
+
+subsection {* theorem 5.8 *}
+
+lemma "A \<union> -A = UNIV"
+  using Set.Compl_partition by auto
+
+lemma "A \<inter> -A = {}"
+  using Set.Compl_disjoint by auto
+
+subsection {* theorem 5.9 *}
+
+lemma "(B = - A) \<longleftrightarrow> (A \<union> B = UNIV \<and> A \<inter> B = {})" by auto
+  
+subsection {* theorem 5.10 *}
+
+lemma "-(A \<union> B) = (-A) \<inter> (-B)"
+  using Set.Compl_Un by auto
+
+lemma "-(A \<inter> B) = (-A) \<union> (-B)"
+  using Set.Compl_Int by auto
+
+subsection {* theorem 5.11 *}
+
+lemma "A \<subseteq> B \<Longrightarrow> A \<union> B = B"
+  using Set.Un_absorb1 by auto
+
+lemma "A \<union> B = B \<Longrightarrow> A \<inter> B = A" 
+  by auto
+
+lemma "A \<inter> B = A \<Longrightarrow> A - B = {}" 
+  by auto
+
+lemma "A - B = {} \<Longrightarrow> A \<subseteq> B" 
+  by auto
+
+subsection {* definition 5.14 *}
+
+lemma "\<Union>A = {x. \<exists>B \<in> A. x \<in> B}"
+  using Union_eq by auto
+
+lemma "\<Inter>A = {x. \<forall>B \<in> A. x \<in> B}"
+  using Inter_eq by auto
+
+lemma "\<Inter>{} = UNIV" by auto
+
+lemma "\<Union>{} = {}" by auto
+
+subsection {* example 5.14 *}
+
+definition "C4 \<equiv> {{0::int},{0,1},{0,1,2}}"
+
+value "\<Union>C4" 
+
+definition "A8 \<equiv> {{0::int,1,2},{4,5,6},{2}}"
+
+value "\<Union>A8"
+value "\<Inter>A8"
+
+section {* section 5.5 counting *}
+
+lemma "finite A \<and> finite B \<and> A \<inter> B = {} \<Longrightarrow> card (A \<union> B) = card A + card B"
+  using card_Un_disjoint by auto
+
+lemma "finite A \<and> finite B \<Longrightarrow> card A + card B = card (A \<union> B) + card (A \<inter> B)"
+  using card_Un_Int by auto
+
+lemma card_un_int: "finite A \<and> finite B \<Longrightarrow> card (A \<union> B) = card A + card B - card (A \<inter> B)" 
+  using card_Un_Int by fastforce
+
+
+section {* section 5.6 inductive set *}
+
+subsection {* example 5.16 *}
+inductive_set even :: "int set" 
+  where "0 \<in> even" |
+        "n \<in> even \<Longrightarrow> n + 2 \<in> even"
+
+subsection {* example 5.17 *}
+inductive_set set3 :: "int set"
+  where "3 \<in> set3" |
+        "\<lbrakk>x \<in> set3; y \<in> set3\<rbrakk> \<Longrightarrow> x + y \<in> set3"
+
+subsection {* string set \<Sigma>* and its caculus *}
+
+type_synonym \<Sigma> = "char"
+(* type_synonym string = "\<Sigma> list" *)
+type_synonym string = "\<Sigma> list" 
+
+subsection {* definition 5.16 *}
+inductive_set sigma_set :: "string set" ("\<Sigma>\<^sup>*" 80)
+  where nil_str: "Nil \<in> sigma_set" |
+        cons_str: "\<lbrakk>chr\<in>\<Sigma>; x\<in>sigma_set\<rbrakk> \<Longrightarrow>chr#x\<in>sigma_set"
+
+subsection {* definition 5.17 *}
+primrec str_n :: "\<Sigma> \<Rightarrow> nat \<Rightarrow> string"
+  where zero_str: "str_n x 0 = Nil" |
+        sucn_str: "str_n x (Suc n) = x#(str_n x n)"
+
+subsection {* definition 5.18 *}
+type_synonym Lang = "string set"
+
+lemma "\<forall>l::Lang. l \<subseteq> \<Sigma>\<^sup>*"
+  proof -
+    {
+      fix x
+      have "\<forall>l::Lang. x\<in>l \<longrightarrow> x\<in>\<Sigma>\<^sup>*"
+        apply(induct x)
+        using nil_str apply blast
+        using cons_str by blast
+    }
+    then show ?thesis by auto
+  qed
+
+subsection {* definition 5.19 *}
+
+definition multi :: "Lang \<Rightarrow> Lang \<Rightarrow> Lang" (infixl "\<^emph>" 85) (*("_\<^emph>_")*)
+  where "A \<^emph> B \<equiv> {z. \<exists>x y. x\<in>A \<and> y\<in>B \<and> z = x@y}"
+
+subsection {* example 5.18 *}
+
+value "{Nil, ''a'',''ab''} \<^emph> {''a'',''bb''}"
+
+value "{''a'',''bb''} \<^emph> {Nil, ''a'',''ab''}"
+
+value "{''a'',''ab''} \<^emph> {''a'',''bb''}"
+
+subsection {* theorem 5.13 *}
+
+lemma "(A \<^emph> {}) = ({} \<^emph> A)" by (simp add: multi_def) 
+
+lemma "(A \<^emph> {Nil}) = ({Nil} \<^emph> A)" 
+  proof -
+    have "\<forall>x\<in>(A \<^emph> {Nil}). x\<in>({Nil} \<^emph> A)"
+      proof
+        fix x
+        assume "x \<in> A\<^emph>{Nil}"
+        then have "\<exists>x1 y1. x1\<in>A \<and> y1\<in>{Nil} \<and> x = x1@y1" by (simp add:multi_def)
+        then show "x\<in>({Nil} \<^emph> A)" using multi_def by auto 
+      qed
+    moreover
+    have "\<forall>x\<in>({Nil} \<^emph> A). x\<in>(A \<^emph> {Nil})"
+      proof
+        fix x
+        assume "x\<in>({Nil} \<^emph> A)"
+        then have "\<exists>x1 y1. x1\<in>{Nil} \<and> y1\<in>A \<and> x = x1@y1" by (simp add:multi_def)
+        then show "x\<in>(A \<^emph> {Nil})" using multi_def by auto 
+      qed
+    ultimately show ?thesis by auto
+  qed
+
+lemma comm_lm: "((A \<^emph> B) \<^emph> C) = (A \<^emph> (B \<^emph> C))"
+  proof -
+    have "\<forall>x\<in>((A \<^emph> B) \<^emph> C). x\<in>(A \<^emph> (B \<^emph> C))"
+      proof
+        fix x
+        assume "x\<in>((A \<^emph> B) \<^emph> C)"
+        then have "\<exists>x1 y1. x1\<in>(A \<^emph> B) \<and> y1\<in>C \<and> x = x1@y1" by (simp add:multi_def)
+        then have "\<exists>x1 y1 x2 y2. x2\<in>A \<and> y2\<in>B \<and> x1 = x2@y2 \<and> y1\<in>C \<and> x = x1@y1"
+          using multi_def by auto 
+        then have "\<exists>x1 y1 x2 y2. x2\<in>A \<and> y2\<in>B \<and> x1 = y2@y1 \<and> y1\<in>C \<and> x = x2@x1"
+          using append_assoc by blast 
+        then show "x\<in>(A \<^emph> (B \<^emph> C))" using multi_def by auto 
+      qed
+    moreover
+    have "\<forall>x\<in>(A \<^emph> (B \<^emph> C)). x\<in>((A \<^emph> B) \<^emph> C)" sorry (* similar to above *)
+    ultimately show ?thesis by auto
+  qed
+
+lemma "A \<subseteq> B \<and> C \<subseteq> D \<Longrightarrow> (A \<^emph> C) \<subseteq> (B \<^emph> D)"
+  proof -
+    assume p: "A \<subseteq> B \<and> C \<subseteq> D"
+    have "\<forall>x\<in>(A \<^emph> C). x\<in>(B \<^emph> D)"
+      proof
+        fix x
+        assume "x\<in>(A \<^emph> C)"
+        with p show "x\<in>(B \<^emph> D)"
+          using mem_Collect_eq multi_def set_rev_mp by fastforce
+      qed
+    then show "(A \<^emph> C) \<subseteq> (B \<^emph> D)" by auto
+  qed
+
+lemma "(A \<^emph> (B \<union> C)) = (A \<^emph> B) \<union> (A \<^emph> C)"
+  proof -
+    have "\<forall>x\<in>(A \<^emph> (B \<union> C)). x\<in>(A \<^emph> B) \<union> (A \<^emph> C)"
+      proof
+        fix x
+        assume "x\<in>(A \<^emph> (B \<union> C))"
+        then have "\<exists>y z. y\<in>A \<and> z\<in>B \<union> C \<and> x = y@z" by (simp add:multi_def)
+        then have "\<exists>y z. y\<in>A \<and> (z\<in>B \<or> z\<in>C) \<and> x = y@z" by simp
+        then have "\<exists>y z. (y\<in>A \<and> z\<in>B \<and> x = y@z) \<or> (y\<in>A \<and> z\<in>C \<and> x = y@z)" by auto
+        then have "(\<exists>y z. (y\<in>A \<and> z\<in>B \<and> x = y@z)) \<or> (\<exists>y z. (y\<in>A \<and> z\<in>C \<and> x = y@z))" by auto
+        then have "x\<in>(A \<^emph> B) \<or> x\<in>(A \<^emph> C)" by (simp add:multi_def)
+        then show "x\<in>(A \<^emph> B) \<union> (A \<^emph> C)" by simp
+      qed
+    moreover
+    have "\<forall>x\<in>(A \<^emph> B) \<union> (A \<^emph> C). x\<in>(A \<^emph> (B \<union> C))" sorry (* similar to the above formula*)
+    ultimately show ?thesis by auto
+  qed
+
+lemma "((B \<union> C) \<^emph> A) = ((B \<^emph> A) \<union> (C \<^emph> A))"
+  sorry (*similar to the above lemma*)
+
+lemma "(A \<^emph> (B \<inter> C)) \<subseteq> (A \<^emph> B) \<inter> (A \<^emph> C)"
+  proof -
+  {
+    fix x
+    assume "x\<in>(A \<^emph> (B \<inter> C))"
+    then have "\<exists>y z. y\<in>A \<and> z\<in>B \<inter> C \<and> x = y@z" by (simp add:multi_def)
+    then have "\<exists>y z. y\<in>A \<and> (z\<in>B \<and> z\<in>C) \<and> x = y@z" by simp
+    then have "\<exists>y z. (y\<in>A \<and> z\<in>B \<and> x = y@z) \<and> (y\<in>A \<and> z\<in>C \<and> x = y@z)" by auto
+    then have "(\<exists>y z. (y\<in>A \<and> z\<in>B \<and> x = y@z)) \<and> (\<exists>y z. (y\<in>A \<and> z\<in>C \<and> x = y@z))" by auto
+    then have "x\<in>(A \<^emph> B) \<and> x\<in>(A \<^emph> C)" by (simp add:multi_def)
+    then have "x\<in>(A \<^emph> B) \<inter> (A \<^emph> C)" by simp
+  }
+  then show ?thesis by auto
+  qed
+
+lemma "((B \<inter> C) \<^emph> A) \<subseteq> ((B \<^emph> A) \<inter> (C \<^emph> A))"
+  sorry (*similar to the above lemma*)
+
+subsection {* definition 5.20 *}
+
+primrec A_n :: "Lang \<Rightarrow> nat \<Rightarrow> Lang" ("_\<^sup>_" [81] 80)
+  where a_n_nil: "(A\<^sup>0) = {Nil}" |
+        a_n_cons: "A_n A (Suc n) = (A \<^emph> (A\<^sup>n))"
+
+subsection {* example 5.19 *}
+
+value "A_n ({Nil, ''a'', ''ab''}) 0"
+
+value "A_n ({Nil, ''a'', ''ab''}) 1"
+
+value "A_n ({Nil, ''a'', ''ab''}) 2"
+
+subsection {* theorem 5.14 *}
+
+lemma A_n_plus: "\<forall>A m n. ((A\<^sup>m) \<^emph> (A\<^sup>n)) = (A_n A (m+n))"
+  proof -
+  {
+    fix m A
+    have "\<forall>n. ((A\<^sup>m) \<^emph> (A\<^sup>n)) = (A_n A (m+n))"
+      proof(induct m)
+        case 0
+        show ?case
+          proof
+            fix n
+            have "\<forall>x\<in>((A\<^sup>0) \<^emph> (A\<^sup>n)). x\<in>(A_n A (0 + n))"
+              proof
+                fix x
+                assume "x\<in>((A\<^sup>0) \<^emph> (A\<^sup>n))"
+                then have "x\<in>({Nil} \<^emph> (A\<^sup>n))" using a_n_nil by simp
+                then have "\<exists>y z. y\<in>{Nil} \<and> z\<in>(A\<^sup>n) \<and> x = y@z" by (simp add:multi_def)
+                then have "x\<in>(A\<^sup>n)" by (simp add:multi_def)
+                then show "x\<in>(A_n A (0 + n))" by simp
+              qed
+            moreover
+            have "\<forall>x\<in>(A_n A (0 + n)). x\<in>((A\<^sup>0) \<^emph> (A\<^sup>n))"
+              proof
+                fix x
+                assume "x\<in>(A_n A (0 + n))"
+                then have "x\<in>(A\<^sup>n)" by simp
+                then have "\<exists>y z. y\<in>{Nil} \<and> z\<in>(A\<^sup>n) \<and> x = y@z" by (simp add:multi_def)
+                then show "x\<in>((A\<^sup>0) \<^emph> (A\<^sup>n))" by (simp add:multi_def)
+              qed
+            ultimately show "((A\<^sup>0) \<^emph> (A\<^sup>n)) = (A_n A (0 + n))" by auto
+          qed
+      next
+        case (Suc m)
+        assume p: "\<forall> n. ((A\<^sup>m) \<^emph> (A\<^sup>n)) = (A_n A (m + n))"
+        show ?case
+          proof
+            fix n
+            from p have "((A\<^sup>m) \<^emph> (A\<^sup>n)) = (A_n A (m + n))" by simp
+            moreover
+            have "(A_n A (Suc m)) \<^emph> (A\<^sup>n) = (A \<^emph> (A\<^sup>m)) \<^emph> (A\<^sup>n)"
+              using a_n_cons by simp
+            moreover
+            have "(A_n A (Suc m + n)) = (A \<^emph> A_n A (m + n))" 
+              using a_n_cons by simp
+
+            ultimately show "((A_n A (Suc m)) \<^emph> (A\<^sup>n)) = (A_n A (Suc m + n))"
+              by (simp add: comm_lm) 
+          qed
+      qed
+  }
+  then show ?thesis by simp
+  qed
+
+lemma "\<forall>A m n. A_n (A\<^sup>m) n = A_n A (m*n)" 
+  proof -
+  {
+    fix A m
+    have "\<forall>n. A_n (A\<^sup>m) n = A_n A (m*n)"
+      proof(induct m)
+        case 0
+        show ?case 
+          proof
+            fix n
+            have "A_n (A\<^sup>0) n = (A\<^sup>0)" 
+              proof(induct n)
+                case 0
+                show ?case using a_n_nil by auto
+              next
+                case (Suc k)
+                assume "A_n (A\<^sup>0) k = (A\<^sup>0)"
+                then have "A_n (A\<^sup>0) (Suc k) = (A\<^sup>0) \<^emph> (A\<^sup>0)"
+                  using a_n_cons by auto
+                then show ?case by (simp add:multi_def)
+              qed
+            then show "A_n (A\<^sup>0) n = A_n A (0 * n)" by simp
+          qed
+      next
+        case (Suc k)
+        assume p: "\<forall>n. A_n (A\<^sup>k) n = A_n A (k * n)"
+        show ?case
+          proof 
+            fix n
+            show "A_n (A_n A (Suc k)) n = A_n A (Suc k * n)"
+              proof(induct n)
+                case 0
+                show ?case using a_n_nil by auto
+              next
+                case (Suc l)
+                assume a0: "A_n (A_n A (Suc k)) l = A_n A (Suc k * l)"
+                
+                have "A_n (A_n A (Suc k)) l = A_n (A \<^emph> (A_n A k)) l" 
+                  using a_n_nil by auto
+                then have a1: "A_n (A_n A (Suc k)) (Suc l) = ((A_n A (Suc k)) \<^emph> (A_n (A_n A (Suc k)) l))"
+                  using a_n_nil by auto
+                with a0 have "A_n (A_n A (Suc k)) (Suc l) = ((A_n A (Suc k)) \<^emph> (A_n A (Suc k * l)))"
+                  by simp
+                then have "A_n (A_n A (Suc k)) (Suc l) = ((A \<^emph> (A_n A k)) \<^emph> (A_n A (Suc k * l)))"
+                  using a_n_cons by auto
+                then show ?case 
+                  using A_n_plus by (metis a1 a0 mult.commute mult_Suc) 
+              qed
+          qed
+      qed
+  }
+  then show ?thesis by auto
+  qed
+
+lemma "A \<subseteq> B \<Longrightarrow> (A\<^sup>n) \<subseteq> (B\<^sup>n)" sorry
+  (* please prove it by youself *)
+
+subsection {* definition 5.21 *}
+definition A_star :: "Lang \<Rightarrow> Lang" ("(_\<^sup>\<star>)" [1000] 999)
+  where "A\<^sup>\<star> \<equiv> (\<Union>n. A\<^sup>n)"
+
+definition A_star1 :: "Lang \<Rightarrow> Lang" ("(_\<^sup>+)" [1000] 999)
+  where "A\<^sup>+ \<equiv> (\<Union>n\<in>{0<..}. A\<^sup>n)"
+
+lemma A_star1_lm: "(x\<in>A\<^sup>+) = (\<exists>n::nat>0. x\<in>A\<^sup>n)"
+  proof -
+    have "(x\<in>A\<^sup>+) \<longrightarrow> (\<exists>n::nat>0. x\<in>A\<^sup>n)" using A_star1_def by blast
+    moreover
+    have "(\<exists>n::nat>0. x\<in>A\<^sup>n) \<longrightarrow> (x\<in>A\<^sup>+)" using A_star1_def by blast
+    ultimately show ?thesis by auto
+  qed
+
+lemma A_star_lm: "(x\<in>A\<^sup>\<star>) = (\<exists>n::nat. x\<in>A\<^sup>n)"
+  proof -
+    have "(x\<in>A\<^sup>\<star>) \<longrightarrow> (\<exists>n::nat. x\<in>A\<^sup>n)" using A_star_def by blast
+    moreover
+    have "(\<exists>n::nat. x\<in>A\<^sup>n) \<longrightarrow> (x\<in>A\<^sup>\<star>)" using A_star_def by blast
+    ultimately show ?thesis by auto
+  qed
+
+
+subsection{* example 5.20 *}
+
+lemma "{''a''}\<^sup>+ = (\<Union>n\<in>{0<..}. {''a''}\<^sup>n)"
+  unfolding A_star1_def using a_n_cons by blast
+
+lemma "{''a''}\<^sup>\<star> = (\<Union>n. {''a''}\<^sup>n)"
+  unfolding A_star_def using a_n_cons by blast
+
+
+subsection{* theorem 5.15 *}
+
+lemma A_star_lm2: "A\<^sup>\<star> = A\<^sup>+ \<union> A\<^sup>0" 
+  proof -
+  {
+    fix x
+    have "(x \<in> A\<^sup>\<star>) \<longrightarrow> (x = [] \<or> x \<in> A\<^sup>+)"
+      using A_star_lm A_star1_lm by (metis a_n_nil gr0I singletonD) 
+    moreover
+    have "(x = [] \<or> x \<in> A\<^sup>+) \<longrightarrow> (x \<in> A\<^sup>\<star>)"
+      using A_star_lm A_star1_lm by (metis a_n_nil insert_iff) 
+    ultimately have "(x \<in> A\<^sup>\<star>) = (x = [] \<or> x \<in> A\<^sup>+)" by auto
+  }
+  then show ?thesis by (simp add:set_eq_iff)
+  qed
+
+lemma "A\<^sup>n \<subseteq> A\<^sup>\<star>" 
+  using A_star_lm by auto
+
+lemma "n > 0 \<Longrightarrow> A\<^sup>n \<subseteq> A\<^sup>+" 
+  using A_star1_lm by auto
+
+lemma "A \<subseteq> (A \<^emph> (B\<^sup>\<star>))"
+  sorry
+
+lemma "A \<subseteq> ((B\<^sup>\<star>) \<^emph> A)"
+  sorry
+
+lemma "A \<subseteq> B \<Longrightarrow> A\<^sup>\<star> \<subseteq> B\<^sup>\<star>"
+  sorry
+
+lemma "A \<subseteq> B \<Longrightarrow> (A_star1 A) \<subseteq> (A_star1 B)"
+  sorry
+
+lemma "A \<^emph> (A\<^sup>\<star>) = (A\<^sup>\<star>) \<^emph> A"
+  sorry
+
+lemma "Nil\<in>A \<Longrightarrow> A\<^sup>\<star> = A\<^sup>+"
+  sorry
+
+lemma "(A\<^sup>\<star>)\<^sup>\<star> = (A\<^sup>\<star>) \<^emph> (A\<^sup>\<star>)"
+  sorry
+
+lemma "(A\<^sup>\<star>)\<^sup>\<star> = (A\<^sup>+)\<^sup>\<star>"
+  sorry
+
+lemma "A_star1 (A_star1 A) = A_star1 A"
+  sorry
+
+section {* section 5.7 pair and product *}
+
+subsection {* definition 5.22*}
+
+value "(x,y)"
+
+value "fst (x,y)"
+
+value "snd (x,y)"
+
+lemma "x \<noteq> y \<Longrightarrow> (x,y)\<noteq>(y,x)" by auto
+
+lemma "(x,y) \<noteq> (y,x)" nitpick sorry (*it is not correct*)
+
+lemma "{x,y} = {y,x}" by auto
+
+lemma "{x,x} = {x}" by auto
+
+subsection {* theorem 5.16*}
+
+lemma "(x,y) = (u,v) \<longleftrightarrow> u = x \<and> v = y" by auto
+
+subsection {* definition 5.23*}
+
+value "(x1,x2,x3,x4)"
+
+lemma "(x1,x2,x3,x4) = (x1,(x2,(x3,x4)))" by auto
+
+(* lemma "(x1,x2,x3,x4) = (((x1,x2),x3),x4)" *)
+(* syntax error*)
+
+lemma "(x1,x2,x3,x4) = (y1,y2,y3,y4) \<longleftrightarrow> x1 = y1 \<and> x2 = y2 \<and> x3 = y3 \<and> x4 = y4"
+  by auto
+
+subsection {* definition 5.24*}
+
+(* thm Times_Un_distrib1 *)
+
+thm Sigma_def
+
+lemma "A \<times> B = {(x,y). x\<in>A \<and> y\<in>B}" by auto
+
+subsection {* example 5.21 *}
+
+definition "A9 \<equiv> {''a'',''b''}"
+
+definition "B9 \<equiv> {1::int,2,3}"
+
+value "A9 \<times> B9"
+
+value "B9 \<times> A9"
+
+value "A9 \<times> A9"
+
+value "B9 \<times> B9"
+
+(*  value "(A9 \<times> B9) \<inter> (B9 \<times> A9)"  *)
+
+subsection {* example 5.22 *}
+
+value "{} \<times> {1::int,2,3}"
+
+value "{1::int,2,3} \<times> {}"
+
+section {* exercise *}
+
+lemma "{{}} \<subseteq> {{}, {{}}}" by auto
+
+
+end
